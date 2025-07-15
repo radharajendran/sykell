@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: sykell_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: sykell_db
+      MYSQL_USER: sykell_user
+      MYSQL_PASSWORD: sykell_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/setup_db.sql:/docker-entrypoint-initdb.d/setup_db.sql
+    networks:
+      - sykell_network
+
+  # Sykell API
+  api:
+    build: .
+    container_name: sykell_api
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: sykell_user
+      DB_PASSWORD: sykell_pass
+      DB_NAME: sykell_db
+      JWT_SECRET: your-super-secret-jwt-key
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    networks:
+      - sykell_network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+
+
+networks:
+  sykell_network:
+    driver: bridge
